@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: nvision-system
+    runtime: python
+    runtimeVersion: 3.11
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: FLASK_ENV
+        value: production

@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Listagem de Chamados - Nvision Informatica{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-search"></i> Filtrar Chamados</h2>
+    <form method="GET" class="form-row">
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status" id="status">
+                <option value="todos" {% if filtro_status == 'todos' %}selected{% endif %}>Todos</option>
+                <option value="aberto" {% if filtro_status == 'aberto' %}selected{% endif %}>Aberto</option>
+                <option value="em_progresso" {% if filtro_status == 'em_progresso' %}selected{% endif %}>Em Progresso</option>
+                <option value="fechado" {% if filtro_status == 'fechado' %}selected{% endif %}>Fechado</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="cliente">Cliente</label>
+            <input type="text" name="cliente" id="cliente" value="{{ filtro_cliente }}" placeholder="Buscar por cliente">
+        </div>
+        <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button type="submit" class="btn" style="width: 100%;"><i class="fas fa-filter"></i> Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-list-ul"></i> Lista de Chamados ({{ chamados|length }})</h2>
+
+    {% if chamados %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Tempo</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chamado in chamados %}
+                    <tr>
+                        <td><strong>#{{ chamado.id }}</strong></td>
+                        <td>{{ chamado.cliente }}</td>
+                        <td>{{ chamado.categoria }}</td>
+                        <td>
+                            {% if chamado.tipo_atendimento == 'contrato' %}
+                                <span style="background: #27ae60; color: white; padding: 3px 8px; border-radius: 8px; font-size: 0.8rem;">Contrato</span>
+                            {% else %}
+                                <span style="background: #e74c3c; color: white; padding: 3px 8px; border-radius: 8px; font-size: 0.8rem;">Avulso</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ chamado.valor_recebido }}</td>
+                        <td>
+                            {% if chamado.tempo_gasto_minutos > 0 %}
+                                {% set horas = chamado.tempo_gasto_minutos // 60 %}
+                                {% set minutos = chamado.tempo_gasto_minutos % 60 %}
+                                <span style="background: #f39c12; color: white; padding: 3px 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold;">
+                                    {% if horas > 0 %}{{ horas }}h {{ minutos }}m{% else %}{{ minutos }}m{% endif %}
+                                </span>
+                            {% else %}
+                                <span style="color: #999;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'open' if chamado.status == 'aberto' else 'progress' if chamado.status == 'em_progresso' else 'closed' }}">
+                                {{ chamado.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-warning" onclick="abrirEditar({{ chamado.id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 2px;"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger" onclick="deletarChamado({{ chamado.id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 2px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="text-align: center; padding: 2rem;">Nenhum chamado encontrado com os filtros selecionados.</p>
+    {% endif %}
+</div>
+
+<!-- Modal para Editar -->
+<div id="modal-editar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 2000; overflow-y: auto;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0;">✏️ Editar Chamado</h3>
+            <button onclick="fecharModalEditar()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #999;">×</button>
+        </div>
+
+        <form id="form-editar">
+            <div class="form-group">
+                <label for="edit-cliente">Cliente *</label>
+                <input type="text" id="edit-cliente" required>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-categoria">Categoria *</label>
+                <select id="edit-categoria" required>
+                    <option value="Suporte Técnico">Suporte Técnico</option>
+                    <option value="Consultoria">Consultoria</option>
+                    <option value="Instalação">Instalação</option>
+                    <option value="Manutenção">Manutenção</option>
+                    <option value="Treinamento">Treinamento</option>
+                    <option value="Desenvolvimento">Desenvolvimento</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-tipo">Tipo de Atendimento *</label>
+                <select id="edit-tipo" required>
+                    <option value="avulso">Avulso</option>
+                    <option value="contrato">Contrato</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-valor">Valor Recebido (R$)</label>
+                <input type="number" id="edit-valor" step="0.01" min="0" value="0">
+            </div>
+
+            <div class="form-group">
+                <label for="edit-descricao">Descrição *</label>
+                <textarea id="edit-descricao" required style="min-height: 100px;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-status">Status</label>
+                <select id="edit-status">
+                    <option value="aberto">Aberto</option>
+                    <option value="em_progresso">Em Progresso</option>
+                    <option value="fechado">Fechado</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label><i class="fas fa-hourglass-end"></i> Tempo Técnico</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #27ae60; min-width: 120px; text-align: center;" id="cronometro-display">0h 0m</div>
+                    <button type="button" class="btn btn-warning" onclick="iniciarCronometro()" style="flex: 1;"><i class="fas fa-play"></i> Iniciar</button>
+                    <button type="button" class="btn btn-danger" onclick="pararCronometro()" style="flex: 1;"><i class="fas fa-stop"></i> Parar</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetarCronometro()" style="flex: 1;"><i class="fas fa-redo"></i> Reset</button>
+                </div>
+                <input type="hidden" id="edit-tempo-minutos" value="0">
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn" style="flex: 1;"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="fecharModalEditar()" style="flex: 1;"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let chamadoIdEmEdicao = null;
+
+    async function abrirEditar(chamadoId) {
+        try {
+            const response = await fetch(`/api/chamados/${chamadoId}`);
+            const chamado = await response.json();
+
+            // Remove "R$ " da formatação
+            const valor = chamado.valor_recebido.replace(/R\$ /, '').replace(/,/, '.');
+
+            document.getElementById('edit-cliente').value = chamado.cliente;
+            document.getElementById('edit-categoria').value = chamado.categoria;
+            document.getElementById('edit-tipo').value = chamado.tipo_atendimento;
+            document.getElementById('edit-valor').value = valor;
+            document.getElementById('edit-descricao').value = chamado.descricao;
+            document.getElementById('edit-status').value = chamado.status;
+
+            // Carregar tempo gasto
+            tempoSegundos = (chamado.tempo_gasto_minutos || 0) * 60;
+            atualizarDisplayCronometro();
+
+            chamadoIdEmEdicao = chamadoId;
+            document.getElementById('modal-editar').style.display = 'block';
+        } catch (error) {
+            alert('Erro ao carregar: ' + error.message);
+        }
+    }
+
+    function fecharModalEditar() {
+        document.getElementById('modal-editar').style.display = 'none';
+    }
+
+    document.getElementById('form-editar').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        try {
+            const response = await fetch(`/api/chamados/${chamadoIdEmEdicao}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente: document.getElementById('edit-cliente').value,
+                    categoria: document.getElementById('edit-categoria').value,
+                    tipo_atendimento: document.getElementById('edit-tipo').value,
+                    valor_recebido: parseFloat(document.getElementById('edit-valor').value || 0),
+                    descricao: document.getElementById('edit-descricao').value,
+                    tempo_gasto_minutos: parseInt(document.getElementById('edit-tempo-minutos').value || 0),
+                    status: document.getElementById('edit-status').value
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.sucesso) {
+                alert('✓ Chamado atualizado!');
+                location.reload();
+            } else {
+                alert('Erro: ' + (result.mensagem || result.erro));
+            }
+        } catch (error) {
+            alert('Erro ao salvar: ' + error.message);
+        }
+    });
+
+    async function deletarChamado(chamadoId) {
+        if (!confirm('⚠️ Tem certeza? Não é possível desfazer!')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/chamados/${chamadoId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.sucesso) {
+                alert('✓ Chamado excluído!');
+                location.reload();
+            } else {
+                alert('Erro: ' + (result.mensagem || result.erro));
+            }
+        } catch (error) {
+            alert('Erro ao excluir: ' + error.message);
+        }
+    }
+
+    // Fechar modal ao clicar fora
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+        if (e.target === this) {
+            fecharModalEditar();
+        }
+    });
+
+    // Cronômetro
+    let cronometroAtivo = false;
+    let cronometroIntervalo = null;
+    let tempoSegundos = 0;
+
+    function atualizarDisplayCronometro() {
+        const horas = Math.floor(tempoSegundos / 3600);
+        const minutos = Math.floor((tempoSegundos % 3600) / 60);
+        const segundos = tempoSegundos % 60;
+
+        let display = '';
+        if (horas > 0) {
+            display = `${horas}h ${minutos}m ${segundos}s`;
+        } else if (minutos > 0) {
+            display = `${minutos}m ${segundos}s`;
+        } else {
+            display = `${segundos}s`;
+        }
+
+        document.getElementById('cronometro-display').textContent = display;
+        document.getElementById('edit-tempo-minutos').value = Math.floor(tempoSegundos / 60);
+    }
+
+    function iniciarCronometro() {
+        if (!cronometroAtivo) {
+            cronometroAtivo = true;
+            cronometroIntervalo = setInterval(() => {
+                tempoSegundos++;
+                atualizarDisplayCronometro();
+            }, 1000);
+        }
+    }
+
+    function pararCronometro() {
+        cronometroAtivo = false;
+        if (cronometroIntervalo) {
+            clearInterval(cronometroIntervalo);
+        }
+    }
+
+    function resetarCronometro() {
+        pararCronometro();
+        tempoSegundos = 0;
+        atualizarDisplayCronometro();
+    }
+</script>
+{% endblock %}

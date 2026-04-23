@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Usuários - Nvision Informatica{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-users-cog"></i> Gerenciamento de Usuários</h2>
+
+    <div style="margin-bottom: 2rem;">
+        <button class="btn" onclick="abrirAdicionarUsuario()"><i class="fas fa-user-plus"></i> Adicionar Usuário</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-list"></i> Usuários Cadastrados ({{ usuarios|length }})</h2>
+
+    {% if usuarios %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Data de Criação</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td><strong>{{ usuario.usuario }}</strong></td>
+                        <td>{{ usuario.email }}</td>
+                        <td>
+                            {% if usuario.ativo %}
+                                <span class="badge" style="background: #27ae60; color: white; padding: 5px 10px; border-radius: 8px;">Ativo</span>
+                            {% else %}
+                                <span class="badge" style="background: #95a5a6; color: white; padding: 5px 10px; border-radius: 8px;">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ usuario.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-warning" onclick="abrirEditar({{ usuario.id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 2px;"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger" onclick="deletarUsuario({{ usuario.id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 2px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="text-align: center; padding: 2rem; color: #999;">Nenhum usuário cadastrado.</p>
+    {% endif %}
+</div>
+
+<!-- Modal para Adicionar/Editar Usuário -->
+<div id="modal-usuario" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 2000; overflow-y: auto;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 id="modal-titulo" style="margin: 0;"><i class="fas fa-user-plus"></i> Adicionar Usuário</h3>
+            <button onclick="fecharModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: #999;">×</button>
+        </div>
+
+        <form id="form-usuario">
+            <div class="form-group">
+                <label for="usuario-input">Usuário *</label>
+                <input type="text" id="usuario-input" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email-input">Email *</label>
+                <input type="email" id="email-input" required>
+            </div>
+
+            <div class="form-group">
+                <label for="senha-input">Senha *</label>
+                <input type="password" id="senha-input" required>
+            </div>
+
+            <div class="form-group" id="confirmar-senha-group" style="display: none;">
+                <label for="nova-senha-input">Nova Senha</label>
+                <input type="password" id="nova-senha-input" placeholder="Deixe em branco para manter a atual">
+            </div>
+
+            <div class="form-group" id="status-group" style="display: none;">
+                <label for="ativo-input">Status</label>
+                <select id="ativo-input">
+                    <option value="true">Ativo</option>
+                    <option value="false">Inativo</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn" style="flex: 1;"><i class="fas fa-save"></i> Salvar</button>
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()" style="flex: 1;"><i class="fas fa-times"></i> Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let usuarioIdEmEdicao = null;
+
+    function abrirAdicionarUsuario() {
+        usuarioIdEmEdicao = null;
+        document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-user-plus"></i> Adicionar Usuário';
+        document.getElementById('usuario-input').value = '';
+        document.getElementById('email-input').value = '';
+        document.getElementById('senha-input').value = '';
+        document.getElementById('senha-input').placeholder = 'Crie uma senha';
+        document.getElementById('senha-input').required = true;
+        document.getElementById('confirmar-senha-group').style.display = 'none';
+        document.getElementById('status-group').style.display = 'none';
+        document.getElementById('modal-usuario').style.display = 'block';
+    }
+
+    function abrirEditar(usuarioId) {
+        usuarioIdEmEdicao = usuarioId;
+        document.getElementById('modal-titulo').innerHTML = '<i class="fas fa-edit"></i> Editar Usuário';
+        document.getElementById('senha-input').placeholder = 'Deixe em branco para manter a atual';
+        document.getElementById('senha-input').required = false;
+        document.getElementById('confirmar-senha-group').style.display = 'block';
+        document.getElementById('status-group').style.display = 'block';
+
+        // Carregar dados do usuário
+        fetch(`/api/usuarios`)
+            .then(response => response.json())
+            .catch(error => {
+                console.log('Usuários carregados via página');
+            });
+
+        document.getElementById('modal-usuario').style.display = 'block';
+    }
+
+    function fecharModal() {
+        document.getElementById('modal-usuario').style.display = 'none';
+    }
+
+    document.getElementById('form-usuario').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const usuario = document.getElementById('usuario-input').value;
+        const email = document.getElementById('email-input').value;
+        const senha = document.getElementById('senha-input').value;
+
+        try {
+            if (usuarioIdEmEdicao === null) {
+                // Criar novo usuário
+                const response = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuario,
+                        email: email,
+                        senha: senha
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.sucesso) {
+                    alert('✓ Usuário criado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.erro);
+                }
+            } else {
+                // Editar usuário
+                const dados = {
+                    email: email,
+                    ativo: document.getElementById('ativo-input').value === 'true'
+                };
+
+                if (senha) {
+                    dados.nova_senha = senha;
+                }
+
+                const response = await fetch(`/api/usuarios/${usuarioIdEmEdicao}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                const result = await response.json();
+
+                if (result.sucesso) {
+                    alert('✓ Usuário atualizado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.erro);
+                }
+            }
+        } catch (error) {
+            alert('Erro ao processar: ' + error.message);
+        }
+    });
+
+    function deletarUsuario(usuarioId) {
+        if (!confirm('⚠️ Tem certeza que deseja deletar este usuário? Não é possível desfazer!')) {
+            return;
+        }
+
+        fetch(`/api/usuarios/${usuarioId}`, {
+            method: 'DELETE'
+        }).then(response => response.json())
+            .then(result => {
+                if (result.sucesso) {
+                    alert('✓ Usuário deletado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.erro);
+                }
+            })
+            .catch(error => alert('Erro ao deletar: ' + error.message));
+    }
+
+    // Fechar modal ao clicar fora
+    document.getElementById('modal-usuario').addEventListener('click', function(e) {
+        if (e.target === this) {
+            fecharModal();
+        }
+    });
+</script>
+{% endblock %}

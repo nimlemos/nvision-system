@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Nvision Informatica{% endblock %}
+
+{% block content %}
+<div class="logo-section">
+    <div class="logo-icon"><i class="fas fa-rocket"></i></div>
+    <div class="logo-text">Nvision Informatica</div>
+    <div class="logo-subtitle">Sistema de Gerenciamento de Atendimento Profissional</div>
+</div>
+
+<div class="stats">
+    <div class="stat-card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+        <div class="stat-number"><i class="fas fa-ticket-alt"></i> {{ total_chamados }}</div>
+        <div class="stat-label">Total de Chamados</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+        <div class="stat-number"><i class="fas fa-clock"></i> {{ chamados_abertos }}</div>
+        <div class="stat-label">Chamados Abertos</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-plus-circle"></i> Abrir Novo Chamado</h2>
+    <form id="form-chamado">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cliente">Cliente / Empresa *</label>
+                <input type="text" id="cliente" name="cliente" required placeholder="Ex: Empresa XYZ">
+            </div>
+            <div class="form-group">
+                <label for="categoria">Categoria *</label>
+                <select id="categoria" name="categoria" required>
+                    <option value="">Selecione uma categoria</option>
+                    <option value="Suporte Técnico">Suporte Técnico</option>
+                    <option value="Consultoria">Consultoria</option>
+                    <option value="Instalação">Instalação</option>
+                    <option value="Manutenção">Manutenção</option>
+                    <option value="Treinamento">Treinamento</option>
+                    <option value="Desenvolvimento">Desenvolvimento</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo_atendimento">Tipo de Atendimento *</label>
+                <select id="tipo_atendimento" name="tipo_atendimento" required>
+                    <option value="avulso">Avulso</option>
+                    <option value="contrato">Contrato</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="valor_recebido">Valor Recebido (R$)</label>
+                <input type="number" id="valor_recebido" name="valor_recebido" step="0.01" min="0" placeholder="0,00">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="data_atendimento">Data e Hora do Atendimento *</label>
+            <input type="datetime-local" id="data_atendimento" name="data_atendimento" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descrição do Problema *</label>
+            <textarea id="descricao" name="descricao" required placeholder="Descreva detalhadamente o problema ou demanda"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="btn"><i class="fas fa-check"></i> Abrir Chamado</button>
+            <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Limpar</button>
+        </div>
+    </form>
+
+    <div id="message-container"></div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-history"></i> Últimos Chamados</h2>
+    {% if ultimos_chamados %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chamado in ultimos_chamados %}
+                    <tr>
+                        <td><strong>#{{ chamado.id }}</strong></td>
+                        <td>{{ chamado.cliente }}</td>
+                        <td>{{ chamado.categoria }}</td>
+                        <td>
+                            {% if chamado.tipo_atendimento == 'contrato' %}
+                                <span style="background: #27ae60; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">Contrato</span>
+                            {% else %}
+                                <span style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">Avulso</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>R$ {{ "%.2f"|format(chamado.valor_recebido) }}</strong></td>
+                        <td>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'open' if chamado.status == 'aberto' else 'progress' if chamado.status == 'em_progresso' else 'closed' }}">
+                                {{ chamado.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="text-align: center; padding: 2rem; color: #999;">Nenhum chamado registrado ainda.</p>
+    {% endif %}
+</div>
+
+<script>
+    // Definir data/hora atual por padrão
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+
+        document.getElementById('data_atendimento').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    });
+
+    // Enviar formulário
+    document.getElementById('form-chamado').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const dados = {
+            cliente: document.getElementById('cliente').value,
+            categoria: document.getElementById('categoria').value,
+            data_atendimento: document.getElementById('data_atendimento').value,
+            descricao: document.getElementById('descricao').value,
+            tipo_atendimento: document.getElementById('tipo_atendimento').value,
+            valor_recebido: parseFloat(document.getElementById('valor_recebido').value || 0)
+        };
+
+        try {
+            const response = await fetch('/api/chamados', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            });
+
+            const result = await response.json();
+            const messageContainer = document.getElementById('message-container');
+
+            if (result.sucesso) {
+                messageContainer.innerHTML = `<div class="message success">✓ ${result.mensagem} (ID: ${result.chamado_id})</div>`;
+                document.getElementById('form-chamado').reset();
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                messageContainer.innerHTML = `<div class="message error">✗ ${result.mensagem}</div>`;
+            }
+        } catch (error) {
+            document.getElementById('message-container').innerHTML = `<div class="message error">✗ Erro ao processar: ${error.message}</div>`;
+        }
+    });
+</script>
+{% endblock %}

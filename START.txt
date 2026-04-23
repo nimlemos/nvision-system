@@ -1,0 +1,113 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║         🚀 NVISION INFORMATICA - ACESSO RÁPIDO                 ║
+║         Sistema de Gerenciamento de Atendimento                ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+⚡ COMECE AQUI - 3 SEGUNDOS PARA COMEÇAR:
+
+
+🖥️  WINDOWS
+═══════════════════════════════════════════════════════════════
+1. Duplo clique em: EXECUTE.bat
+2. Pronto! Vai abrir http://localhost:5000 automaticamente
+
+
+🍎 MAC / LINUX
+═══════════════════════════════════════════════════════════════
+1. Abra o terminal nesta pasta
+2. Execute: chmod +x EXECUTE.sh
+3. Execute: ./EXECUTE.sh
+4. Vai abrir http://localhost:5000 automaticamente
+
+
+❓ E SE NÃO FUNCIONAR?
+═══════════════════════════════════════════════════════════════
+
+WINDOWS - Abra PowerShell como Admin:
+  python -m pip install -r requirements.txt
+  python EXECUTE.py
+
+MAC/LINUX:
+  python3 -m pip install -r requirements.txt
+  python3 EXECUTE.py
+
+
+📋 O QUE O SCRIPT FAZ:
+═══════════════════════════════════════════════════════════════
+✅ Verifica Python
+✅ Instala as dependências (automático)
+✅ Inicia o servidor
+✅ Abre o navegador automaticamente
+✅ Mostra mensagens coloridas e amigáveis
+
+
+🎯 VOCÊ VÊ ISSO:
+═══════════════════════════════════════════════════════════════
+
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║          🚀 NVISION INFORMATICA                            ║
+║          Sistema de Gerenciamento de Atendimento           ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+✅ Python 3.x detectado
+✅ Todos os pacotes já estão instalados!
+
+════════════════════════════════════════════════════════════════
+✨ SERVIDOR INICIADO!
+════════════════════════════════════════════════════════════════
+
+🌐 Acesse em: http://localhost:5000
+
+📍 Abrindo navegador automaticamente...
+
+✅ Navegador aberto automaticamente!
+   http://localhost:5000
+
+════════════════════════════════════════════════════════════════
+⏹️  Pressione Ctrl+C para parar o servidor
+════════════════════════════════════════════════════════════════
+
+
+🎨 NO NAVEGADOR VOCÊ VÊ:
+═══════════════════════════════════════════════════════════════
+
+1. DASHBOARD
+   - Logo Nvision Informatica
+   - Total de chamados
+   - Formulário bonito para abrir chamados
+
+2. CHAMADOS
+   - Lista completa
+   - Busca por cliente
+   - Filtro por status
+   - Ver detalhes
+
+3. RELATÓRIOS
+   - Estatísticas
+   - Gráficos coloridos
+   - Download em PDF
+   - Pronto para apresentar aos clientes
+
+
+💾 SEUS DADOS:
+═══════════════════════════════════════════════════════════════
+- Armazenados em: chamados.db
+- Persiste entre execuções
+- Seguro localmente no seu computador
+
+
+📚 MAIS AJUDA:
+═══════════════════════════════════════════════════════════════
+- Veja QUICKSTART.md para uso detalhado
+- Veja README.md para documentação completa
+
+
+════════════════════════════════════════════════════════════════
+
+Desenvolvido com ❤️ para Nvision Informatica
+

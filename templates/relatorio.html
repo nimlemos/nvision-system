@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - Nvision Informatica{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-chart-pie"></i> Relatório de Atendimentos</h2>
+
+    <form method="GET" class="form-row" style="margin-bottom: 2rem;">
+        <div class="form-group">
+            <label for="mes">Mês</label>
+            <select name="mes" id="mes" required>
+                <option value="1" {% if mes == 1 %}selected{% endif %}>Janeiro</option>
+                <option value="2" {% if mes == 2 %}selected{% endif %}>Fevereiro</option>
+                <option value="3" {% if mes == 3 %}selected{% endif %}>Março</option>
+                <option value="4" {% if mes == 4 %}selected{% endif %}>Abril</option>
+                <option value="5" {% if mes == 5 %}selected{% endif %}>Maio</option>
+                <option value="6" {% if mes == 6 %}selected{% endif %}>Junho</option>
+                <option value="7" {% if mes == 7 %}selected{% endif %}>Julho</option>
+                <option value="8" {% if mes == 8 %}selected{% endif %}>Agosto</option>
+                <option value="9" {% if mes == 9 %}selected{% endif %}>Setembro</option>
+                <option value="10" {% if mes == 10 %}selected{% endif %}>Outubro</option>
+                <option value="11" {% if mes == 11 %}selected{% endif %}>Novembro</option>
+                <option value="12" {% if mes == 12 %}selected{% endif %}>Dezembro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="ano">Ano</label>
+            <input type="number" name="ano" id="ano" value="{{ ano }}" min="2020" max="2100" required>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: flex-end; gap: 0.5rem;">
+            <button type="submit" class="btn" style="flex: 1; margin-right: 0;"><i class="fas fa-filter"></i> Filtrar</button>
+            <a href="/relatorio/pdf?mes={{ mes }}&ano={{ ano }}" class="btn btn-success" style="flex: 1; text-align: center; justify-content: center;"><i class="fas fa-download"></i> Baixar PDF</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-chart-line"></i> Resumo do Período</h2>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_chamados }}</div>
+            <div class="stat-label">Total de Chamados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ clientes_stats|length }}</div>
+            <div class="stat-label">Clientes Atendidos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ categorias_stats|length }}</div>
+            <div class="stat-label">Categorias</div>
+        </div>
+    </div>
+</div>
+
+{% if clientes_stats %}
+<div class="card">
+    <h2><i class="fas fa-users"></i> Clientes com Mais Atendimentos</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Número de Atendimentos</th>
+                <th>Percentual</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set clientes_ordenados = clientes_stats.items()|sort(attribute='1', reverse=true) %}
+            {% for cliente, count in clientes_ordenados %}
+            <tr>
+                <td>{{ cliente }}</td>
+                <td><strong>{{ count }}</strong></td>
+                <td>{{ "%.1f"|format((count / total_chamados * 100) if total_chamados > 0 else 0) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-tags"></i> Distribuição por Categoria</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Número de Chamados</th>
+                <th>Percentual</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set categorias_ordenadas = categorias_stats.items()|sort(attribute='1', reverse=true) %}
+            {% for categoria, count in categorias_ordenadas %}
+            <tr>
+                <td>{{ categoria }}</td>
+                <td><strong>{{ count }}</strong></td>
+                <td>{{ "%.1f"|format((count / total_chamados * 100) if total_chamados > 0 else 0) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card">
+    <p style="text-align: center; padding: 2rem; color: #999;">Nenhum chamado registrado para este período.</p>
+</div>
+{% endif %}
+
+{% if chamados %}
+<div class="card">
+    <h2><i class="fas fa-file-alt"></i> Detalhes de Todos os Chamados</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Categoria</th>
+                <th>Data</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chamado in chamados %}
+            <tr>
+                <td>#{{ chamado.id }}</td>
+                <td>{{ chamado.cliente }}</td>
+                <td>{{ chamado.categoria }}</td>
+                <td>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    <span class="badge badge-{{ 'open' if chamado.status == 'aberto' else 'progress' if chamado.status == 'em_progresso' else 'closed' }}">
+                        {{ chamado.status.replace('_', ' ').title() }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório por Cliente - Nvision Informatica{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-user-tie"></i> Relatório Detalhado por Cliente</h2>
+
+    <form method="GET" class="form-row" style="margin-bottom: 2rem;">
+        <div class="form-group">
+            <label for="mes">Mês</label>
+            <select name="mes" id="mes" required>
+                <option value="1" {% if mes == 1 %}selected{% endif %}>Janeiro</option>
+                <option value="2" {% if mes == 2 %}selected{% endif %}>Fevereiro</option>
+                <option value="3" {% if mes == 3 %}selected{% endif %}>Março</option>
+                <option value="4" {% if mes == 4 %}selected{% endif %}>Abril</option>
+                <option value="5" {% if mes == 5 %}selected{% endif %}>Maio</option>
+                <option value="6" {% if mes == 6 %}selected{% endif %}>Junho</option>
+                <option value="7" {% if mes == 7 %}selected{% endif %}>Julho</option>
+                <option value="8" {% if mes == 8 %}selected{% endif %}>Agosto</option>
+                <option value="9" {% if mes == 9 %}selected{% endif %}>Setembro</option>
+                <option value="10" {% if mes == 10 %}selected{% endif %}>Outubro</option>
+                <option value="11" {% if mes == 11 %}selected{% endif %}>Novembro</option>
+                <option value="12" {% if mes == 12 %}selected{% endif %}>Dezembro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="ano">Ano</label>
+            <input type="number" name="ano" id="ano" value="{{ ano }}" min="2020" max="2100" required>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: flex-end; gap: 0.5rem;">
+            <button type="submit" class="btn" style="flex: 1;"><i class="fas fa-filter"></i> Filtrar</button>
+            <a href="/relatorio-cliente/pdf?mes={{ mes }}&ano={{ ano }}" class="btn btn-success" style="flex: 1; text-align: center; justify-content: center;"><i class="fas fa-download"></i> Baixar PDF</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-chart-pie"></i> Resumo Geral</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">Atendimentos com Contrato</div>
+            <div style="font-size: 1.3rem; margin-top: 0.5rem;">R$ {{ "%.2f"|format(total_contrato) }}</div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">Atendimentos Avulsos</div>
+            <div style="font-size: 1.3rem; margin-top: 0.5rem;">R$ {{ "%.2f"|format(total_avulso) }}</div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 1.5rem; border-radius: 15px; text-align: center;">
+            <div style="font-size: 2rem; font-weight: bold;">TOTAL</div>
+            <div style="font-size: 1.3rem; margin-top: 0.5rem;">R$ {{ "%.2f"|format(total_contrato + total_avulso) }}</div>
+        </div>
+    </div>
+</div>
+
+{% if clientes %}
+<div class="card">
+    <h2><i class="fas fa-briefcase"></i> Detalhes por Cliente</h2>
+
+    {% for cliente, dados in clientes.items() | sort %}
+    <div style="margin-bottom: 2.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 10px; border-left: 5px solid #00d4ff;">
+        <h3 style="color: #1f4788; margin-bottom: 1rem;">{{ cliente }}</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #27ae60;">
+                <div style="font-size: 0.9rem; color: #666;">Contrato</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #27ae60;">{{ dados.contrato|length }} atendimentos</div>
+                <div style="font-size: 1.1rem; color: #27ae60;">R$ {{ "%.2f"|format(dados.total_contrato) }}</div>
+            </div>
+
+            <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                <div style="font-size: 0.9rem; color: #666;">Avulso</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #e74c3c;">{{ dados.avulso|length }} atendimentos</div>
+                <div style="font-size: 1.1rem; color: #e74c3c;">R$ {{ "%.2f"|format(dados.total_avulso) }}</div>
+            </div>
+
+            <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #f39c12;">
+                <div style="font-size: 0.9rem; color: #666;">Total Cliente</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: #f39c12;">{{ dados.contrato|length + dados.avulso|length }}</div>
+                <div style="font-size: 1.1rem; color: #f39c12;">R$ {{ "%.2f"|format(dados.total_contrato + dados.total_avulso) }}</div>
+            </div>
+        </div>
+
+        {% if dados.contrato %}
+        <h4 style="color: #27ae60; margin-top: 1rem; margin-bottom: 0.5rem;">📋 Atendimentos com Contrato</h4>
+        <table style="width: 100%; margin-bottom: 1rem;">
+            <thead style="background: #27ae60; color: white;">
+                <tr>
+                    <th style="padding: 0.8rem; text-align: left;">Data</th>
+                    <th style="padding: 0.8rem; text-align: left;">Categoria</th>
+                    <th style="padding: 0.8rem; text-align: center;">Valor</th>
+                    <th style="padding: 0.8rem; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chamado in dados.contrato %}
+                <tr style="border-bottom: 1px solid #eee; background: {% if loop.index % 2 == 0 %}#f9f9f9{% endif %}">
+                    <td style="padding: 0.8rem;">{{ chamado.data_criacao.strftime('%d/%m/%Y') }}</td>
+                    <td style="padding: 0.8rem;">{{ chamado.categoria }}</td>
+                    <td style="padding: 0.8rem; text-align: center; font-weight: bold;">R$ {{ "%.2f"|format(chamado.valor_recebido) }}</td>
+                    <td style="padding: 0.8rem; text-align: center;">
+                        <span class="badge badge-{{ 'open' if chamado.status == 'aberto' else 'progress' if chamado.status == 'em_progresso' else 'closed' }}">
+                            {{ chamado.status.replace('_', ' ').title() }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if dados.avulso %}
+        <h4 style="color: #e74c3c; margin-top: 1rem; margin-bottom: 0.5rem;">💰 Atendimentos Avulsos</h4>
+        <table style="width: 100%;">
+            <thead style="background: #e74c3c; color: white;">
+                <tr>
+                    <th style="padding: 0.8rem; text-align: left;">Data</th>
+                    <th style="padding: 0.8rem; text-align: left;">Categoria</th>
+                    <th style="padding: 0.8rem; text-align: center;">Valor</th>
+                    <th style="padding: 0.8rem; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chamado in dados.avulso %}
+                <tr style="border-bottom: 1px solid #eee; background: {% if loop.index % 2 == 0 %}#fff9fb{% endif %}">
+                    <td style="padding: 0.8rem;">{{ chamado.data_criacao.strftime('%d/%m/%Y') }}</td>
+                    <td style="padding: 0.8rem;">{{ chamado.categoria }}</td>
+                    <td style="padding: 0.8rem; text-align: center; font-weight: bold;">R$ {{ "%.2f"|format(chamado.valor_recebido) }}</td>
+                    <td style="padding: 0.8rem; text-align: center;">
+                        <span class="badge badge-{{ 'open' if chamado.status == 'aberto' else 'progress' if chamado.status == 'em_progresso' else 'closed' }}">
+                            {{ chamado.status.replace('_', ' ').title() }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p style="text-align: center; padding: 2rem; color: #999;">Nenhum atendimento registrado para este período.</p>
+</div>
+{% endif %}
+{% endblock %}
